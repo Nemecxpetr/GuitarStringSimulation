@@ -13,7 +13,6 @@ General wave function:
 d2y/dt^2 = c^2 d2y/dx^2 - b * dy/dt
 
 """
-from cmath import log
 import time
 import math
 import numpy as np
@@ -25,16 +24,20 @@ from matplotlib.animation import FuncAnimation
 """
 
 # Set up the simulation parameters
-dt = 0.0012 # time step
-fps = 30 # frames per second
+dt = 0.0005 # time step
+fps = 60 # frames per second
 animation_length = 10**4
-interval = 100./fps
+interval = 1./fps
 
 # initial string speed
-c = 200
+T = 62 # N  - napìtí na okrajích struny
+mu = 6.8 # délková hustota struny
+c = math.sqrt(T/mu)*100
 # damping factor
-damp = dt*15*10**-5# TO DO: change damping factor to a function dependent on frequency of the wave function (higher frequencies will be dumped more
-viscosity = 520
+damp = dt*0*10**-5 # set to 0 only viscosity dampening for now
+# EDIT: viscosity ensures that now 
+# TO DO: change damping factor to a function dependent on frequency of the wave function (higher frequencies will be dumped more
+viscosity = 220
 
 class String():    
     def __init__(self, x, y0, c):
@@ -64,7 +67,7 @@ class String():
 
         # Update the previous string shape for the next time step
         self.y_prev = temp
-""" Old method without damping not used now
+"""
     def increment(self, dt):
         """"""Increment shape of string by dt with frequency-dependent damping""""""
         # Calculate the time step based on the string speed and grid spacing
@@ -164,7 +167,7 @@ class MyAnimation:
         Plotting
         """
         global line, string
-        # Create Ã­nstance of the string object
+        # Create ínstance of the string object
         self.string = string
 
         # Set up the plot
