@@ -64,7 +64,7 @@ class String():
 
         # Update the previous string shape for the next time step
         self.y_prev = temp
-"""
+""" Old method without damping not used now
     def increment(self, dt):
         """"""Increment shape of string by dt with frequency-dependent damping""""""
         # Calculate the time step based on the string speed and grid spacing
@@ -164,7 +164,7 @@ class MyAnimation:
         Plotting
         """
         global line, string
-        # Create ínstance of the string object
+        # Create Ã­nstance of the string object
         self.string = string
 
         # Set up the plot
