@@ -23,14 +23,16 @@ from matplotlib.animation import FuncAnimation
 # Set the initial conditions
 """
 
+# Number of points quantitizing the string
+dx=2**6
 # Set up the simulation parameters
 dt = 0.0002 # time step
-fps = 25 # frames per second
+fps = 30 # frames per second
 animation_length = 10**4
 interval = 1./fps
 
 # Initial string length in cm
-string_length = 40
+string_length = 100
 
 T = 80 # N tension on ends
 mu = 6.8 # longitude density
@@ -39,10 +41,10 @@ mu = 6.8 # longitude density
 c = math.sqrt(T/mu)*100
 
 # damping factor
-damp = dt*6*10**-5 # set to 0 only viscosity dampening for now
+damp = dt*0*10**-5 # set to 0 only viscosity dampening for now
 # EDIT: viscosity ensures that now 
 # TO DO: change damping factor to a function dependent on frequency of the wave function (higher frequencies will be dumped more
-viscosity = 5000
+viscosity = 8000
 
 class String():    
     def __init__(self, x, y0, c):
@@ -100,7 +102,7 @@ class String():
 Initial wave shape 
 """
 # create empty matrix to be filled with shape
-x = np.linspace(1, string_length, 2**8)
+x = np.linspace(1, string_length, dx)
 y = np.empty_like(x)
 
 # x is percentage length coordinate on string (so it should be between 0 and 1)
@@ -161,18 +163,21 @@ y = v2[1] * np.exp(-(x - v2[0]*x[-1])**2 / (2*sigma**2)) # Gaussian function sha
 #sigma = 3
 #y[np.where(x > v3[0]*x[-1])] = v4[1] * np.exp(-(x[np.where(x > v3[0]*x[-1])] - v4[0]*x[-1])**2 / (2*sigma**2)) # Gaussian function shape
 
-# 'SINE'
-y = v0[1]*np.sin(2*np.pi/(x[-1] - x[0]) * x)
-
-# 'NOISE'
-y[1:-1] = np.random.uniform(-2,2,254)
-# OR
-#y[1:-1] = np.random.randint(-2,2,254)
-
 # 'SAW'
 y[np.where(x <= v0[0]*x[-1])] = v0[1]/(v0[0]*x[-1]) * x[np.where(x <= v0[0]*x[-1])]
 y[np.where(x > v0[0]*x[-1])] = -v0[1]/((1.0-v0[0])*x[-1]) * (x[np.where(x > v0[0]*x[-1])] - x[-1])
 
+# 'NOISE'
+y[1:-1] = np.random.uniform(-2,2,dx-2)
+# OR
+#y[1:-1] = np.random.randint(-2,2,254)
+
+# 'SINE' - for visualising transients
+f1, f2, f3, f4= .5, 2, 4, 8
+y[1:-1] = v0[1]*np.sin(f1*2*np.pi/(x[-1] - x[0]) * x[1:-1])
+y[1:-1] += v0[1]*np.sin(f2*np.pi/(x[-1] - x[0]) * x[1:-1])
+y[1:-1] += v0[1]*np.sin(f3*np.pi/(x[-1] - x[0]) * x[1:-1])
+y[1:-1] += v0[1]*np.sin(f4*2*np.pi/(x[-1] - x[0]) * x[1:-1])
 
 # Initialize the string object with the chosen initial shape
 string = String(x, y, c)
@@ -189,7 +194,7 @@ class MyAnimation:
         # Set up the plot
         #fig, ax = plt.subplots()
         line, = ax.plot(self.string.x, self.string.y)
-        ax.set_ylim(-1.1*v0[1], 1.1*v0[1])
+        ax.set_ylim(-2.5*v0[1], 2.5*v0[1])
         #ax.set_xlim()
         ax.set_title("String wave function animation")
         ax.set_xlabel("String lenght (cm)")
