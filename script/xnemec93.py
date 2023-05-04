@@ -7,9 +7,9 @@ Email: xnemec93@vutbr.cz
 
 Assignment: The creation of wave function with transients on string 
 
-Script:
+Script: 
 
-General wave function:
+General one dimensional wave function:
 d2y/dt^2 = c^2 d2y/dx^2 - b * dy/dt
 
 """
@@ -24,20 +24,25 @@ from matplotlib.animation import FuncAnimation
 """
 
 # Set up the simulation parameters
-dt = 0.0005 # time step
-fps = 60 # frames per second
+dt = 0.0002 # time step
+fps = 25 # frames per second
 animation_length = 10**4
 interval = 1./fps
 
+# Initial string length in cm
+string_length = 40
+
+T = 80 # N tension on ends
+mu = 6.8 # longitude density
+
 # initial string speed
-T = 62 # N  - napìtí na okrajích struny
-mu = 6.8 # délková hustota struny
 c = math.sqrt(T/mu)*100
+
 # damping factor
-damp = dt*0*10**-5 # set to 0 only viscosity dampening for now
+damp = dt*6*10**-5 # set to 0 only viscosity dampening for now
 # EDIT: viscosity ensures that now 
 # TO DO: change damping factor to a function dependent on frequency of the wave function (higher frequencies will be dumped more
-viscosity = 220
+viscosity = 5000
 
 class String():    
     def __init__(self, x, y0, c):
@@ -61,8 +66,14 @@ class String():
 
         # Update the string shape using the wave equation with viscosity damping
         temp = np.copy(self.y)
-        self.y[1:-1] = 2 * self.y[1:-1] - self.y_prev[1:-1] + r[1:-1] * (self.y[2:] - 2 * self.y[1:-1] + self.y[:-2])
+        # first delete old line (2y-yold) and then increment with diff. eq 
+        # (here done by multiplying r with y - indexes set the initial condition of being mounted at both ends)
+        self.y[1:-1] = 2 * self.y[1:-1] - self.y_prev[1:-1] + r[1:-1] * (self.y[2:] - 2 * self.y[1:-1] + self.y[:-2]) 
+        # then add viscosity 
+        # If we comment out the line before we will so what it does to the initial state alone - it flatens it out 
+        # when in motion it basically damps the higher freqencies the higher the viscosity the bigger damping
         self.y[1:-1] += self.viscosity * dt * r[1:-1] * (self.y[2:] + self.y[:-2] - 2 * self.y[1:-1])
+        # amplitude damping done from diff. eq.
         self.y[1:-1] -= damp * (self.y[1:-1] - self.y_prev[1:-1]) / dt
 
         # Update the previous string shape for the next time step
@@ -89,12 +100,13 @@ class String():
 Initial wave shape 
 """
 # create empty matrix to be filled with shape
-x = np.linspace(1, 100, 2**8)
-y = y = np.empty_like(x)
+x = np.linspace(1, string_length, 2**8)
+y = np.empty_like(x)
 
+# x is percentage length coordinate on string (so it should be between 0 and 1)
+# y is y coordinate of deflection in cm
 #v[x, y]
 #v[0, 1]
-
 v0 = [.3, 2]
 v1 = [.3, 1]
 v2 = [.3, 2]
@@ -141,6 +153,13 @@ for [xnew, ynew] in v:
 #condition = np.where(x > xold*x[-1])
 #y[condition] = -v[-1][1] / ((1.0 - v[-1][0]) * x[-1]) * (x[condition] - x[-1])
 """
+# 'GAUSS'
+sigma = .4 # d0 * (x[-1] - x[0]) # quality factor the smaller the number the steeper the G. function
+y = v2[1] * np.exp(-(x - v2[0]*x[-1])**2 / (2*sigma**2)) # Gaussian function shape
+# can be used with
+# 'DOUBLE GAUSS'
+#sigma = 3
+#y[np.where(x > v3[0]*x[-1])] = v4[1] * np.exp(-(x[np.where(x > v3[0]*x[-1])] - v4[0]*x[-1])**2 / (2*sigma**2)) # Gaussian function shape
 
 # 'SINE'
 y = v0[1]*np.sin(2*np.pi/(x[-1] - x[0]) * x)
@@ -150,13 +169,10 @@ y[1:-1] = np.random.uniform(-2,2,254)
 # OR
 #y[1:-1] = np.random.randint(-2,2,254)
 
-# 'GAUSS'
-sigma = 5 # d0 * (x[-1] - x[0]) # quality factor the smaller the number the steeper the G. function
-y = v2[1] * np.exp(-(x - v2[0]*x[-1])**2 / (2*sigma**2)) # Gaussian function shape
-
 # 'SAW'
 y[np.where(x <= v0[0]*x[-1])] = v0[1]/(v0[0]*x[-1]) * x[np.where(x <= v0[0]*x[-1])]
 y[np.where(x > v0[0]*x[-1])] = -v0[1]/((1.0-v0[0])*x[-1]) * (x[np.where(x > v0[0]*x[-1])] - x[-1])
+
 
 # Initialize the string object with the chosen initial shape
 string = String(x, y, c)
@@ -166,12 +182,12 @@ class MyAnimation:
         """
         Plotting
         """
-        global line, string
+        global line, string, fig, ax
         # Create ínstance of the string object
         self.string = string
 
         # Set up the plot
-        fig, ax = plt.subplots()
+        #fig, ax = plt.subplots()
         line, = ax.plot(self.string.x, self.string.y)
         ax.set_ylim(-1.1*v0[1], 1.1*v0[1])
         #ax.set_xlim()
@@ -220,7 +236,9 @@ line, = ax.plot(string.x, string.y)
 ax.set_title("Initial string deflexion shape")
 ax.set_xlabel("String lenght (cm)")
 ax.set_ylabel("String Deflection (cm)")
+
 pa = MyAnimation()
     
+#ani = MyAnimation()
 
 plt.show() 
